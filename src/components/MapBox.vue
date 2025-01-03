@@ -1,29 +1,76 @@
 <template>
-  <div ref="mapContainer" class="map-container"></div>
+  <div id="map" :style="{ width: '100%', height: '500px' }"></div>
 </template>
-<script>
-import mapboxgl from 'mapbox-gl';
-mapboxgl.accessToken = 'pk.eyJ1Ijoic2h3ZXRhbXBhbmRpdCIsImEiOiJjbTVmZTQ5ZXMyZWppMnVzN2FmdG9pdW1zIn0.8s3PyySrPUQp7kvhNglbig';
-mapboxgl.config.REQUIRE_TELEMETRY = false;
-export default {
-  mounted() {
-  const map = new mapboxgl.Map({
-    container: this.$refs.mapContainer,
-    style: "mapbox://styles/mapbox/streets-v12", // Replace with your preferred map style
-    center: [-71.224518, 42.213995],
-    zoom: 9,
-  });
 
-  this.map = map;
-},
-unmounted() {
-  this.map.remove();
-  this.map = null;
-}
+<script>
+import mapboxgl from "mapbox-gl";
+
+export default {
+  name: "MapBox",
+  props: {
+    accessToken: {
+      type: String,
+      required: true,
+    },
+    center: {
+      type: Array,
+      default: () => [73.8567, 18.5204], // Pune, India
+    },
+    zoom: {
+      type: Number,
+      default: 9,
+    },
+    markers: {
+      type: Array,
+      default: () => [], // Expecting an array of { lng, lat } objects
+    },
+  },
+  data() {
+    return {
+      map: null,
+    };
+  },
+  mounted() {
+    mapboxgl.accessToken = this.accessToken;
+    this.map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/streets-v11",
+      center: this.center,
+      zoom: this.zoom,
+    });
+
+    this.map.on("load", () => {
+      console.log("Map loaded successfully");
+      this.addMarkers(); // Add markers once the map is loaded
+    });
+
+    this.map.on("error", (e) => {
+      console.error("Map error:", e);
+    });
+  },
+  methods: {
+    addMarkers() {
+      if (this.markers.length > 0) {
+        this.markers.forEach(({ lng, lat }) => {
+          new mapboxgl.Marker()
+            .setLngLat([lng, lat])
+            .addTo(this.map);
+        });
+      }
+    },
+  },
+  beforeUnmount() {
+    if (this.map) {
+      this.map.remove();
+    }
+  },
 };
 </script>
-<style>
-.map-container {
-  flex: 1;
+
+<style scoped>
+#map {
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 </style>
